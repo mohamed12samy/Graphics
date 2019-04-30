@@ -6,7 +6,8 @@
 
 #include <tchar.h>
 #include <windows.h>
-
+#include <iostream>
+using namespace std;
 /*  Declare Windows procedure  */
 LRESULT CALLBACK WindowProcedure (HWND, UINT, WPARAM, LPARAM);
 
@@ -24,8 +25,9 @@ void AddMenus(HWND hwnd){
     AppendMenu(hh,MF_STRING , 1,"Parametric Line");
     AppendMenu(hh,MF_STRING , 2,"DDA Line");
     AppendMenu(hh,MF_STRING , 3,"Mid Point Line");
+    AppendMenu(hh,MF_SEPARATOR , NULL,NULL);
 
-    //AppendMenu(hmenu , MF_STRING,1,"ParamLine");
+
     SetMenu(hwnd,hmenu);
 }
 
@@ -95,6 +97,7 @@ int WINAPI WinMain (HINSTANCE hThisInstance,
 
 
 /*  This function is called by the Windows function DispatchMessage()  */
+/****************************************DRAWING FUNCTIONS************************************************/
 int Round(int val){
 
     return (int)(val+0.5);
@@ -103,43 +106,97 @@ void drawLineParametric(HDC hdc , int x1 , int y1 , int x2 , int y2,COLORREF col
     for(double t=0 ; t<=1 ; t+=0.001){
         int x = Round(x1+t*(x2-x1));
         int y = Round(y1+t*(y2-y1));
+        //cout<<x<<"    "<<y<<endl;
         SetPixel(hdc , x,y,color);
     }
 }
+
+void drawLineDDA(HDC hdc , int x1 , int y1 , int x2 , int y2,COLORREF color){
+    int x= x1, y=y1,
+    dx = x2-x1 , dy = y2-y1,
+    e = 2*dy-dx , e1 = 2*(dy-dx) , e2 = 2*dy;
+    SetPixel(hdc , x,y,color);
+    while(x<x2)
+    {
+        x++;
+        if(e>=0)
+        {
+            y++;
+            e += e1;
+        }
+        else e += e2;
+        SetPixel(hdc , x,y,color);
+    }
+}
+void drawLineMIDPOINT(HDC hdc , int x1 , int y1 , int x2 , int y2,COLORREF color)
+{
+    int x = x1 , y = y1,
+    dx = x2-x1 , dy = y2-y1,
+    d = dx + (2*dy+1-2*y1) - 2*dy*(x1+1-x1);
+    SetPixel(hdc , x,y,color);
+    while(x<x2)
+    {
+        if(d>0){
+            x++;
+            d +=(-2*dy);
+           }
+           else {
+                x++;
+                y++;
+                d += (-2*dy)+(2*dx);
+           }
+           SetPixel(hdc , x,y,color);
+        }
+    }
+
+
+/*********************************************************************************************************/
+
 LRESULT CALLBACK WindowProcedure (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     static int x1 , y1 ,x2 ,y2;
      HDC hdc;
+     hdc = GetDC(hwnd);
     switch (message)                  /* handle the messages */
     {
-
-        case WM_CREATE:
-            AddMenus(hwnd);
-            break;
-        case WM_DESTROY:
+     case WM_CREATE:
+        AddMenus(hwnd);
+        break;
+ case WM_DESTROY:
             PostQuitMessage (0);       /* send a WM_QUIT to the message queue */
             break;
 
-        case WM_COMMAND:
-
-            switch(wParam)
-            {
-            case 1:
-                MessageBeep(MB_MODEMASK);
-                break;
-            }
-            break;
-        case WM_LBUTTONDOWN:
+    case WM_LBUTTONDOWN:
             x1 = LOWORD(lParam);
             y1 = HIWORD(lParam);
+            cout<<x1<<"    "<<y1<<endl;
             break;
-        case WM_LBUTTONUP:
+    case WM_LBUTTONUP:
             x2 = LOWORD(lParam);
             y2 = HIWORD(lParam);
-           hdc = GetDC(hwnd);
-            drawLineParametric(hdc , x1,y1,x2,y2,RGB(255,0,0));
+
+            //drawLineParametric(hdc , x1,y1,x2,y2,RGB(255,0,0));
             ReleaseDC(hwnd,hdc);
+            cout<<x2<<"    "<<y2<<endl;
             break;
+
+        case WM_COMMAND:
+        switch(wParam)
+        {
+        case 1:
+            MessageBeep(MB_MODEMASK);
+            drawLineParametric(hdc , x1,y1,x2,y2,RGB(255,0,0));
+            break;
+        case 2:
+            MessageBeep(MB_APPLMODAL);
+            drawLineDDA(hdc , x1,y1,x2,y2,RGB(255,0,0));
+            break;
+        case 3:
+            MessageBeep(MB_APPLMODAL);
+            drawLineMIDPOINT(hdc , x1,y1,x2,y2,RGB(0,0,0));
+            break;
+        }
+        break;
         default:                      /* for messages that we don't deal with */
             return DefWindowProc (hwnd, message, wParam, lParam);
     }
