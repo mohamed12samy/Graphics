@@ -3,8 +3,8 @@
 	<tchar.h>
 	<windows.h>
 
-1556619150 source:e:\fci\semester#6\graphics\new folder\graphics\main.cpp
+1557048018 source:e:\fci\semester#6\graphics\new folder\graphics\main.cpp
 	<tchar.h>
 	<windows.h>
-	<iostream>
+	<bits/stdc++.h>
 
